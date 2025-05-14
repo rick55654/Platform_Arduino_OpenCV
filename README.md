@@ -1,5 +1,5 @@
 
-# ARMCtrl_Arduino_OpenCV
+# Platform_Crawler_Arduino_OpenCV
 
 本專案為一套整合影像辨識與 Arduino 控制的機器手臂控制系統，
 可針對紅色與藍色的「三角形」與「方形」目標物進行辨識，並傳送指令給機器手臂執行動作。
@@ -74,7 +74,7 @@ python main.py
 ## 📁 檔案結構簡述
 
 ```bash
-ARMCtrl_Arduino_OpenCV/
+Platform_Crawler_Arduino_OpenCV/
 ├── Arduino2ARM/
 │   └── arduino_python.ino     # Arduino 控制端程式碼
 ├── OpenCV2Arduino/
