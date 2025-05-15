@@ -21,5 +21,6 @@ if sender.ser and sender.ser.in_waiting:
 else:
     print("[Test] No response from Arduino.")
 
-# 關閉連線
+# 關閉連線test
+
 sender.close()
