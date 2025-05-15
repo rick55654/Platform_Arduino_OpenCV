@@ -9,7 +9,9 @@ color_config_path = Path(__file__).parent / "color_config.json"
 with open(color_config_path, "r", encoding="utf-8") as f:
     color_ranges = json.load(f)
 
-# 顏色 + 形狀 → 對應的控制指令
+# 顏色 + 形狀 → 對應的控制指令 
+# #待修改
+#目前選項 "Triangle","Square","Hexagon","Circle"
 action_map = {
     ('Red', 'Triangle'): 'A',
     ('Red', 'Square'): 'B',
