@@ -76,6 +76,18 @@ void motor2_backward() { //步進馬達後退
   step();
 }
 
+void vavle_open() {
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENB, 150);
+}
+
+void vavle_close() {
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  analogWrite(ENB, 150);
+}
+
 void loop() {
   unsigned long now = millis();
 
@@ -155,6 +167,7 @@ void loop() {
     motor1_stop();
     m2_start_time = now;
     m2_step_count = 0;
+    vavle_close();
   }
 
   else if (m2_phase == 2 && now - m2_start_time >= 5000) {
@@ -179,6 +192,7 @@ void loop() {
     m1_running = false;
     m1_state = 0;
     m1_cycle_count = 0;
+    vavle_open();
   }
 
 }
