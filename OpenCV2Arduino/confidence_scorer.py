@@ -19,16 +19,8 @@ def compute_confidence(cnt, approx, hsv_mask, shape):
 
     elif shape == "Hexagon":
         # 接近6邊且平均邊長差異不大
-        if 5 <= len(approx) <= 7:
-            shape_score = 0.8
-        else:
-            shape_score = 0.5
-
-    elif shape == "Circle":
-        perimeter = cv2.arcLength(cnt, True)
-        circularity = 4 * np.pi * area / (perimeter * perimeter + 1e-6)
-        shape_score = min(1.0, circularity)  # 圓度愈高愈接近1
-
+        shape_score = 1.0 if 5 <= len(approx) <= 7 else 0.5
+            
     else:
         shape_score = 0.3  # 其他未定義形狀的保底分
 

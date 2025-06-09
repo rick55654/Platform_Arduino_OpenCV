@@ -35,15 +35,6 @@ def detect_target(frame):
                 shape = "Square"
             elif 5 <= num_vertices <= 6:
                 shape = "Hexagon"
-            else:
-                # 嘗試偵測圓形：邊數多，且外接圓誤差小
-                area = cv2.contourArea(cnt)
-                perimeter = cv2.arcLength(cnt, True)
-                if perimeter == 0:
-                    continue
-                circularity = 4 * np.pi * (area / (perimeter * perimeter))
-                if circularity > 0.75:
-                    shape = "Circle"
 
             if shape and validate_shape(cnt, approx, shape):
                 score = compute_confidence(cnt, approx, mask, shape)

@@ -29,13 +29,4 @@ def validate_shape(cnt, approx, shape_name):
         if area < 1500:
             return False
 
-    elif shape_name == "Circle":
-        # 使用圓度來驗證圓形
-        perimeter = cv2.arcLength(cnt, True)
-        if perimeter == 0:
-            return False
-        circularity = 4 * np.pi * area / (perimeter * perimeter)
-        if circularity < 0.75:  # 圓形的圓度應高於 0.75
-            return False
-
     return True

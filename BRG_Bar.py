@@ -8,7 +8,7 @@ CONFIG_PATH = os.path.join("OpenCV2Arduino", "color_config.json")
 
 class HSVAdjuster:
     def __init__(self):
-        self.color_options = ["Red", "Green", "Blue", "Yellow"]
+        self.color_options = ["Red", "Blue"]
         self.current_color_index = 0
         self.color_name = self.color_options[self.current_color_index]
         self.window_name = "HSV Adjust"
@@ -80,18 +80,12 @@ class HSVAdjuster:
                 self._save_config()
             elif key == ord('q'):
                 break
-            elif key == ord('z'):
+            elif key == ord('r'):
                 self.color_name = "Red"
                 print("Switched to Red")
-            elif key == ord('c'):
-                self.color_name = "Green"
-                print("Switched to Green")
-            elif key == ord('x'):
+            elif key == ord('b'):
                 self.color_name = "Blue"
                 print("Switched to Blue")
-            elif key == ord('v'):
-                self.color_name = "Yellow"
-                print("Switched to Yellow")
 
         self.cap.release()
         cv2.destroyAllWindows()
