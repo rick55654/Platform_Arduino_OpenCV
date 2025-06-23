@@ -1,4 +1,4 @@
-# Platform_Crawler_Arduino_OpenCV
+# Platform_Arduino_OpenCV
 
 本專案為一套整合影像辨識與 Arduino 控制的機器手臂控制系統，
 可針對紅色與藍色的「三角形」、「正方形」、「六邊形」目標物進行辨識，並傳送指令給機器手臂執行動作。
