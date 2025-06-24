@@ -3,7 +3,7 @@ const int AIRPUMP_IN2 = 5;   // 空氣泵馬達 IN2
 const int AIRPUMP_IN1 = 6;   // 空氣泵馬達 IN1
 const int AIRPUMP_ENA = 7;   // 空氣泵馬達 ENA (PWM)
 const int AIRPUMP_PWM = 130; // 空氣泵 PWM 速度
-
+//
 // 空氣泵狀態
 int airpumpPhase = 0;        // 0: 初始狀態  1: 充氣  2:停止
 
