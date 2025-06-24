@@ -39,14 +39,14 @@ void loop() {
     delay(1500);     //打氣馬達充氣1.5秒
     airpumpStop();   //打氣馬達停止 
     delay(1000);     //打氣馬達停止1.0秒
-    airpumpStart();       //
-    delay(3000);          //
-    airpumpStop();        //
-    delay(500);           //
-    airpumpStart();       //
-    delay(2000);          //
-    airpumpStop();        //
-    delay(800);           //
+    airpumpStart();
+    delay(3000);
+    airpumpStop();
+    delay(500);
+    airpumpStart();
+    delay(2000);
+    airpumpStop();
+    delay(800);
     
     airpumpPhase = 2;
     }
