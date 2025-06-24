@@ -98,7 +98,7 @@ void loop() {
   }
 
   // 8. 反轉完成或碰到限位，結束流程
-  if (stepperPhase == 3 && stepperStepCount >= totalSteps || digitalRead(LIMIT1_PIN) == LOW || digitalRead(LIMIT2_PIN) == LOW) {
+  if (stepperPhase == 3 && stepperStepCount >= totalSteps || digitalRead(LIMIT1_PIN) == HIGH || digitalRead(LIMIT2_PIN) == HIGH) {
     stepperPhase = 0;
     stepperStepCount = 0;
     Serial.println("Over");
