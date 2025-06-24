@@ -12,8 +12,8 @@ void setup() {
 
 // 電磁閥打開
 void valveOpenExhaust() {
-  digitalWrite(VALVE_IN3, HIGH);
-  digitalWrite(VALVE_IN4, LOW);
+  digitalWrite(VALVE_IN3, LOW);
+  digitalWrite(VALVE_IN4, HIGH);
   analogWrite(VALVE_ENB, VALVE_PWM);
 }
 
