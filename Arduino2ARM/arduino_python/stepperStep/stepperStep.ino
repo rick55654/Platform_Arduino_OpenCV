@@ -17,6 +17,7 @@ int totalSteps = 0;                 // 目標步數
 int stepperStepCount = 0;           // 已走步數
 
 void setup() {
+  Serial.begin(9600); // 啟動序列通訊
   pinMode(DIR_PIN, OUTPUT);     
   pinMode(STEP_PIN, OUTPUT);
   pinMode(LIMIT1_PIN, INPUT_PULLUP); 
@@ -71,10 +72,10 @@ void loop() {
       Serial.println("Nothing");
       stepperPhase = 0;
     }
+    serialInput = "";
 
     // 4. 安全保護
     if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps,太多圈了!!!");}
-    serialInput = "";
   }
   
   // 5. 步進馬達正轉

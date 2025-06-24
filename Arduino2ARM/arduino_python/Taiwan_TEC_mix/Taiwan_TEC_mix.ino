@@ -131,13 +131,13 @@ void loop() {
       Serial.println("Go to last box");
     } else {
       Serial.println("Nothing");
+      airpumpPhase = 0;
     }
-
+    serialInput = "";
+    
   // 4. 安全保護
     if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps,太多圈了!!!");}
     if (AIRPUMP_PWM >= 140) {Serial.println("airpump too fast,打氣馬達太快了!!!");}
-
-    serialInput = "";
   }
 
   // 5. 空氣泵控制
