@@ -47,6 +47,7 @@ void loop() {
     delay(2000);          //
     airpumpStop();        //
     delay(800);           //
+    
     airpumpPhase = 2;
     }
 }
