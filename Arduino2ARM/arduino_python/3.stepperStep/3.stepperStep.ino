@@ -45,18 +45,25 @@ void stepperBackward() {
 }
 
 void loop() {
-  // 1. 讀取序列埠指令（只在系統閒置時）
+  // 1. 即時停止步進馬達
+  if (digitalRead(LIMIT1_PIN) == HIGH || digitalRead(LIMIT2_PIN) == HIG){
+    stepperPhase = 0;
+    stepperStepCount = 0;
+    Serial.println("Over");
+  }
+  
+  // 2. 讀取序列埠指令（只在系統閒置時）
   if (Serial.available() && stepperPhase == 0) {
     serialInput = Serial.readStringUntil('\n');
     serialInput.trim();
   }
   
-  // 2. 執行中時清空序列緩衝區，避免誤讀
+  // 3. 執行中時清空序列緩衝區，避免誤讀
   if (stepperPhase != 0) {
     while (Serial.available()) Serial.read();
   }
 
-  // 3. 處理輸入指令，決定步數
+  // 4. 處理輸入指令，決定步數
   if (serialInput != "") {
     stepperPhase = 1;
     if (serialInput == "A" || serialInput == "D") {
@@ -73,8 +80,7 @@ void loop() {
       stepperPhase = 0;
     }
     serialInput = "";
-
-    // 4. 安全保護
+    
     if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps,太多圈了!!!");}
   }
   
@@ -98,7 +104,7 @@ void loop() {
   }
 
   // 8. 反轉完成或碰到限位，結束流程
-  if (stepperPhase == 3 && stepperStepCount >= totalSteps || digitalRead(LIMIT1_PIN) == HIGH || digitalRead(LIMIT2_PIN) == HIGH) {
+  if (stepperPhase == 3 && stepperStepCount >= totalSteps) {
     stepperPhase = 0;
     stepperStepCount = 0;
     Serial.println("Over");
