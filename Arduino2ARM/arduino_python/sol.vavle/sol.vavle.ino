@@ -25,8 +25,8 @@ void valveCloseExhaust() {
 }
 
 void loop() {
-  valveOpenExhaust();
-  delay(100);
-  valveCloseExhaust();
-  delay(100);
+  valveOpenExhaust(); // 電磁閥打開
+  delay(100);         // 電磁閥打開0.1秒
+  valveCloseExhaust();// 電磁閥關閉
+  delay(100);         // 電磁閥關閉0.1秒
 }
