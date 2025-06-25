@@ -23,4 +23,5 @@ class AppUI:
                 cv2.moveWindow(mask_name, 650 * idx, 520)
 
     def should_quit(self):
-        return cv2.waitKey(1) & 0xFF == ord('q')
+        key = cv2.waitKey(1) & 0xFF
+        return key == ord('q') or key == 27  # 按 q 或 ESC 都可以

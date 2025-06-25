@@ -84,7 +84,7 @@ while True:
             shape = "Triangle"
         elif num_vertices == 4 and 0.8 < aspect_ratio < 1.2 and area >= min_area:
             shape = "Square"
-        elif 5 <= num_vertices <= 6 and area >= min_area:
+        elif 6 <= num_vertices <= 7 and area >= min_area:
             shape = "Hexagon"
 
         if shape:

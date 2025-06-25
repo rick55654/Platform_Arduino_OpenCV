@@ -1,21 +1,15 @@
 # main.py
 import cv2
 import numpy as np
-import json
-from pathlib import Path
-from OpenCV2Arduino import SignalSender, StateManager , AppUI
+from OpenCV2Arduino import SignalSender, StateManager, AppUI
 
-# --- config: color_ranges, action_map ---
-color_config_path = Path(__file__).parent / "OpenCV2Arduino" / "color_config.json"
-with open(color_config_path, "r", encoding="utf-8") as f:
-    color_ranges = json.load(f)  # 讀取 HSV 顏色範圍設定
-    
 # ====== 主要參數設定 ======
 COM_PORT = 'COM4'        # <<< 這裡填寫你的 Arduino COM port
 BAUD_RATE = 9600         # <<< 這裡填寫你的 Serial Baudrate
+# ====== 攝影機設定 ======
+cap1 = cv2.VideoCapture(0)  # <<< 依實際情況修改（0 通常是內建攝影機，1 是外接攝影機）
 
-# 顏色+形狀對應 Arduino 指令代碼
-#（↓↓↓↓↓↓↓依題目修改下方對應表↓↓↓↓↓↓↓）
+# 顏色+形狀對應 Arduino 指令代碼（可依需求修改下方對應表）
 action_map = {
     ('Red', 'Triangle'): 'A',
     ('Red', 'Square'): 'B',
@@ -24,7 +18,20 @@ action_map = {
     ('Blue', 'Square'): 'E',
     ('Blue', 'Hexagon'): 'F',
 }
-#（↑↑↑↑↑↑↑依題目修改上方對應表↑↑↑↑↑↑↑）
+
+# 在這裡設定 HSV 範圍與最小面積
+color_ranges = {
+    "Red": {
+        "lower": [161, 186, 189],
+        "upper": [179, 255, 255],
+        "min_area": 1500
+    },
+    "Blue": {
+        "lower": [98, 255, 139],
+        "upper": [116, 255, 221],
+        "min_area": 1500
+    }
+}
 
 # ====== 目標偵測主函式 ======
 def detect_target(frame):
@@ -32,16 +39,16 @@ def detect_target(frame):
     result_frame = frame.copy()
     mask_total = np.zeros(hsv.shape[:2], dtype=np.uint8)  # 全部遮罩
     detected_labels = []
-    
-    for color_name, (lower, upper) in color_ranges.items():
-        lower_np = np.array(lower)
-        upper_np = np.array(upper)
+
+    for color_name, cfg in color_ranges.items():
+        lower_np = np.array(cfg["lower"])
+        upper_np = np.array(cfg["upper"])
+        min_area = cfg.get("min_area", 1000)
         mask = cv2.inRange(hsv, lower_np, upper_np)  # 產生遮罩
         mask_total = cv2.bitwise_or(mask_total, mask)
         cv2.imshow(f"{color_name} Mask", mask)  # 顯示遮罩
 
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
         for cnt in contours:
             approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)  # 多邊形近似
             x, y, w, h = cv2.boundingRect(approx)
@@ -50,17 +57,12 @@ def detect_target(frame):
             aspect_ratio = w / h if h != 0 else 0
 
             shape = None
-
-            # 這裡根據題目需求調整形狀判斷條件（頂點數、面積、長寬比等）
-
-            #  ↓↓↓↓↓↓↓可以修改 area 或 num_vertices 的數值↓↓↓↓↓↓↓
-            if num_vertices == 3 and area >= 1500:
+            if num_vertices == 3 and area >= min_area:
                 shape = "Triangle"
-            elif num_vertices == 4 and 0.8 < aspect_ratio < 1.2 and area >= 1000:
+            elif num_vertices == 4 and 0.8 < aspect_ratio < 1.2 and area >= min_area:
                 shape = "Square"
-            elif 5 <= num_vertices <= 6 and area >= 1500:
+            elif 6 <= num_vertices <= 7 and area >= min_area:
                 shape = "Hexagon"
-            # ↑↑↑↑↑↑↑可以修改 area 或 num_vertices 的數值↑↑↑↑↑↑↑
 
             if shape:
                 label = action_map.get((color_name, shape), None)
@@ -68,15 +70,14 @@ def detect_target(frame):
                     detected_labels.append(label)
                     cv2.drawContours(result_frame, [approx], -1, (0, 255, 0), 2)
                     cv2.putText(result_frame,
-                        f"{color_name}-{shape}",
+                        f"{color_name}-{shape} :{int(area)}",
                         (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
                         0.7, (255, 255, 255), 2)
-
     return result_frame, detected_labels, mask_total
 
 # ====== 主程式 ======
 def main():
-    cap = cv2.VideoCapture(0)  # <<< 這裡可指定攝影機編號
+    cap = cap1  # 使用攝影機
     sender = SignalSender(port=COM_PORT, baudrate=BAUD_RATE)  # 建立 Serial 傳送物件
     ui = AppUI()  # 建立 UI 物件
 
