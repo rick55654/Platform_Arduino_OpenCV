@@ -4,11 +4,11 @@ import time
 # 1. 設定 Arduino 的連接埠與速度
 arduino = serial.Serial('COM4', 9600)  # 請確認你的 Arduino 是 COM 幾
 time.sleep(2)  # 等待 Arduino 重啟
-print("準備好了！請輸入 A ~ F 來控制 Arduino。輸入 Q 可退出程式。")
+print("Arduino準備好了！請輸入。輸入 Q 可退出程式。")
 
 # 2. 重複讓使用者輸入並傳送
 while True:
-    command = input("請輸入指令（任意字元，Q 離開）：").strip().upper()
+    command = input("請輸入指令（Q 離開）：").strip().upper()
 
     if command == 'Q':
         print("離開程式")
