@@ -92,10 +92,9 @@ while True:
             if label:
                 # 畫出多邊形輪廓
                 cv2.drawContours(result_frame, [approx], -1, (0, 0, 255), 2)
-                # 在結果畫面上畫出外框與圖形名稱與對應動作
-                # cv2.rectangle(result_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                # 在結果畫面上畫出外框與圖形名稱、對應動作與面積
                 cv2.putText(result_frame,
-                            f"{shape} ({label})",  # 顯示圖形名稱與對應動作
+                            f"{shape} ({label}){int(area)}",  # 顯示圖形名稱、動作、面積
                             (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
                             0.7, (255, 255, 255), 2)
 
