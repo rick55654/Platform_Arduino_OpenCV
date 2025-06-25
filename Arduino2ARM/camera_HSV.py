@@ -40,10 +40,13 @@ print("[整合模組] 調整 HSV 與面積拉桿，按 q 離開")
 while True:
     # 讀取攝影機畫面
     ret, frame = cap.read()
+    
     if not ret:
         print("[錯誤] 無法讀取攝影機畫面。")
         break
     
+    # 將 BGR 影像轉換為 HSV 色彩空間
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # 取得拉桿數值
     h_low = cv2.getTrackbarPos("H Low", "Sliders")
@@ -53,9 +56,6 @@ while True:
     v_low = cv2.getTrackbarPos("V Low", "Sliders")
     v_high = cv2.getTrackbarPos("V High", "Sliders")
     min_area = cv2.getTrackbarPos("Min Area", "Sliders")
-
-    # 將 BGR 影像轉換為 HSV 色彩空間
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # 根據 HSV 滑桿數值產生遮罩（只保留指定顏色範圍）
     lower_np = np.array([h_low, s_low, v_low])

@@ -66,7 +66,6 @@ def detect_target(frame):
                 label = action_map.get((color_name, shape), None)
                 if label:
                     detected_labels.append(label)
-                    # 用 drawContours 畫出多邊形輪廓，比 rectangle 更能呈現實際形狀
                     cv2.drawContours(result_frame, [approx], -1, (0, 255, 0), 2)
                     cv2.putText(result_frame,
                         f"{color_name}-{shape}",

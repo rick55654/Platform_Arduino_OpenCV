@@ -109,13 +109,16 @@ class HSVAdjuster:
                 aspect_ratio = w / h if h != 0 else 0
 
                 shape = None
+
+                #  ↓↓↓↓↓↓↓可以修改 area 或 num_vertices 的數值↓↓↓↓↓↓↓
                 if num_vertices == 3 and area >= 1500:
                     shape = "Triangle"
                 elif num_vertices == 4 and 0.8 < aspect_ratio < 1.2 and area >= 1000:
                     shape = "Square"
                 elif 5 <= num_vertices <= 6 and area >= 1500:
                     shape = "Hexagon"
-
+                # ↑↑↑↑↑↑↑可以修改 area 或 num_vertices 的數值↑↑↑↑↑↑↑
+                
                 if shape:
                     cv2.drawContours(result_frame, [approx], -1, (0, 0, 255), 2)
                     cv2.putText(result_frame, f"{shape} Area:{int(area)}", (x, y - 10),
