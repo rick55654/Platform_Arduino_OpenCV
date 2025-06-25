@@ -2,45 +2,23 @@ import cv2
 import numpy as np
 import json
 import os
+import threading
+import tkinter as tk
 
-# 設定統一路徑（位於 OpenCV2Arduino 資料夾內）
 CONFIG_PATH = os.path.join("OpenCV2Arduino", "color_config.json")
 
 class HSVAdjuster:
     def __init__(self):
         self.color_options = ["Red", "Blue"]
-        self.current_color_index = 0
-        self.color_name = self.color_options[self.current_color_index]
-        self.window_name = "HSV Adjust"
+        self.color_name = self.color_options[0]
+        self.should_exit = False
 
-        #self.cap = cv2.VideoCapture("http://admin:admin@192.168.164.81:8081/video")
         self.cap = cv2.VideoCapture(0)
-        
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
 
-        # 建立 Trackbars
-        cv2.namedWindow(self.window_name)
-        self._create_trackbars()
-
         self.hsv_ranges = self._load_config()
-
-    def _create_trackbars(self):
-        cv2.createTrackbar("Hue Min", self.window_name, 0, 179, lambda x: None)
-        cv2.createTrackbar("Hue Max", self.window_name, 10, 179, lambda x: None)
-        cv2.createTrackbar("Sat Min", self.window_name, 100, 255, lambda x: None)
-        cv2.createTrackbar("Sat Max", self.window_name, 255, 255, lambda x: None)
-        cv2.createTrackbar("Val Min", self.window_name, 100, 255, lambda x: None)
-        cv2.createTrackbar("Val Max", self.window_name, 255, 255, lambda x: None)
-
-    def _get_trackbar_values(self):
-        h_min = cv2.getTrackbarPos("Hue Min", self.window_name)
-        h_max = cv2.getTrackbarPos("Hue Max", self.window_name)
-        s_min = cv2.getTrackbarPos("Sat Min", self.window_name)
-        s_max = cv2.getTrackbarPos("Sat Max", self.window_name)
-        v_min = cv2.getTrackbarPos("Val Min", self.window_name)
-        v_max = cv2.getTrackbarPos("Val Max", self.window_name)
-        return [h_min, s_min, v_min], [h_max, s_max, v_max]
+        self._start_tkinter_gui()
 
     def _load_config(self):
         if os.path.exists(CONFIG_PATH):
@@ -48,48 +26,108 @@ class HSVAdjuster:
                 return json.load(f)
         return {}
 
-    def _save_config(self):
-        lower, upper = self._get_trackbar_values()
-        # 覆蓋原本的設定，清除舊的上下限
-        self.hsv_ranges[self.color_name] = [lower, upper]
+    def _save_config(self, color_name):
+        lower = [self.h_min.get(), self.s_min.get(), self.v_min.get()]
+        upper = [self.h_max.get(), self.s_max.get(), self.v_max.get()]
+        self.hsv_ranges[color_name] = [lower, upper]
         with open(CONFIG_PATH, 'w') as f:
             json.dump(self.hsv_ranges, f, indent=4)
-        print(f"[{self.color_name}] HSV Range saved.")
+        print(f"[{color_name}] HSV Range saved.")
 
-    def _switch_color(self):
-        self.current_color_index = (self.current_color_index + 1) % len(self.color_options)
-        self.color_name = self.color_options[self.current_color_index]
-        print(f"Switched to color: {self.color_name}")
+    def _exit_program(self):
+        self.should_exit = True
+        self.root.destroy()
 
-    def run(self):
-        while True:
+    def _start_tkinter_gui(self):
+        self.root = tk.Tk()
+        self.root.title("HSV 調整與儲存工具")
+        self.root.geometry("350x500+1200+100")
+
+        # HSV 拉桿
+        tk.Label(self.root, text="Hue Min").pack()
+        self.h_min = tk.Scale(self.root, from_=0, to=179, orient=tk.HORIZONTAL)
+        self.h_min.set(0)
+        self.h_min.pack(fill="x")
+        tk.Label(self.root, text="Hue Max").pack()
+        self.h_max = tk.Scale(self.root, from_=0, to=179, orient=tk.HORIZONTAL)
+        self.h_max.set(179)
+        self.h_max.pack(fill="x")
+        tk.Label(self.root, text="Sat Min").pack()
+        self.s_min = tk.Scale(self.root, from_=0, to=255, orient=tk.HORIZONTAL)
+        self.s_min.set(0)
+        self.s_min.pack(fill="x")
+        tk.Label(self.root, text="Sat Max").pack()
+        self.s_max = tk.Scale(self.root, from_=0, to=255, orient=tk.HORIZONTAL)
+        self.s_max.set(255)
+        self.s_max.pack(fill="x")
+        tk.Label(self.root, text="Val Min").pack()
+        self.v_min = tk.Scale(self.root, from_=0, to=255, orient=tk.HORIZONTAL)
+        self.v_min.set(0)
+        self.v_min.pack(fill="x")
+        tk.Label(self.root, text="Val Max").pack()
+        self.v_max = tk.Scale(self.root, from_=0, to=255, orient=tk.HORIZONTAL)
+        self.v_max.set(255)
+        self.v_max.pack(fill="x")
+
+        # 直接兩個按鈕存紅色或藍色
+        btn_save_red = tk.Button(self.root, text="儲存紅色數值", font=("Arial", 14),
+                                 command=lambda: self._save_config("Red"))
+        btn_save_red.pack(fill="x", padx=10, pady=5)
+
+        btn_save_blue = tk.Button(self.root, text="儲存藍色數值", font=("Arial", 14),
+                                  command=lambda: self._save_config("Blue"))
+        btn_save_blue.pack(fill="x", padx=10, pady=5)
+
+        # 關閉按鈕
+        btn_exit = tk.Button(self.root, text="關閉程式", font=("Arial", 14),
+                             command=self._exit_program)
+        btn_exit.pack(fill="x", padx=10, pady=10)
+
+        # 啟動影像顯示執行緒
+        threading.Thread(target=self._video_loop, daemon=True).start()
+        self.root.mainloop()
+
+    def _video_loop(self):
+        while not self.should_exit:
             ret, frame = self.cap.read()
             if not ret:
                 break
             hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-            lower, upper = self._get_trackbar_values()
-            mask = cv2.inRange(hsv, np.array(lower), np.array(upper))
+            lower = np.array([self.h_min.get(), self.s_min.get(), self.v_min.get()])
+            upper = np.array([self.h_max.get(), self.s_max.get(), self.v_max.get()])
+            mask = cv2.inRange(hsv, lower, upper)
             result = cv2.bitwise_and(frame, frame, mask=mask)
 
-            # Resize output for visibility
-            vis = np.hstack((frame, result))
+            # 輪廓偵測與形狀標註
+            result_frame = frame.copy()
+            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            for cnt in contours:
+                approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)
+                area = cv2.contourArea(cnt)
+                num_vertices = len(approx)
+                x, y, w, h = cv2.boundingRect(approx)
+                aspect_ratio = w / h if h != 0 else 0
+
+                shape = None
+                if num_vertices == 3 and area >= 1500:
+                    shape = "Triangle"
+                elif num_vertices == 4 and 0.8 < aspect_ratio < 1.2 and area >= 1000:
+                    shape = "Square"
+                elif 5 <= num_vertices <= 6 and area >= 1500:
+                    shape = "Hexagon"
+
+                if shape:
+                    cv2.drawContours(result_frame, [approx], -1, (0, 0, 255), 2)
+                    cv2.putText(result_frame, f"{shape} Area:{int(area)}", (x, y - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+
+            vis = np.hstack((result_frame, result))
             cv2.imshow("Preview", vis)
-
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('s'):
-                self._save_config()
-            elif key == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.should_exit = True
                 break
-            elif key == ord('r'):
-                self.color_name = "Red"
-                print("Switched to Red")
-            elif key == ord('b'):
-                self.color_name = "Blue"
-                print("Switched to Blue")
-
         self.cap.release()
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    adjuster = HSVAdjuster()
-    adjuster.run()
+    HSVAdjuster()
