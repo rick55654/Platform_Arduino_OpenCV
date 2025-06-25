@@ -68,19 +68,18 @@ Platform_Arduino_OpenCV/
 │   ├── color_config.json           # HSV 範圍設定檔，供辨識與調整共用
 │   ├── signal_sender.py            # 傳送對應代碼至 Arduino
 │   ├── state_manager.py            # 多幀穩定性判斷模組
-├── BRG_Bar.py                      # HSV 參數儲存工具
 ├── main.py                         # 啟動辨識流程的主程式
 └── README.md
 ```
 - **Arduino2ARM/arduino/**：Arduino 端程式碼。
 - **Arduino2ARM/python/**：Python 端測試與通訊程式碼。
 - **main.py**：主辨識流程，包含影像處理、形狀判斷、指令傳送與 UI。
-- **OpenCV2Arduino/**：模組化各功能（UI、Serial 傳送、狀態管理、HSV 設定）。
+- **OpenCV2Arduino/**：模組化各功能（UI、Serial 傳送、狀態管理）。
 
 ---
 
 ## 👨‍💻 作者
 
 本專案原始作者為 [ray-uncoding](https://github.com/ray-uncoding)，
-現有程式碼已根據本次需求進行整合與簡化（如主程式結構、偵測邏輯等），
-部分內容與原始版本有所不同，請依本說明文件與程式碼為主
+現有程式碼已根據本次台科盃活動需求進行調整與簡化（如主程式結構、偵測邏輯等），
+大部分內容與原版不同，請依本說明文件與程式碼為主
