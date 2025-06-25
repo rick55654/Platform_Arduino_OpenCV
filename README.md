@@ -50,12 +50,11 @@ python BRG_Bar.py
 操作方式：
 
 - 使用滑桿調整 HSV 直到遮罩畫面正確標出目標物
-- **按下 `r` 鍵：切換為「紅色」模式**
-- **按下 `b` 鍵：切換為「藍色」模式**
-- **按下 `s` 鍵：儲存目前 HSV 範圍至對應顏色的 JSON 檔案中（將覆蓋該顏色舊資料）**
+- 點選「儲存紅色數值」或「儲存藍色數值」按鈕，將目前 HSV 範圍分別儲存至對應顏色的 JSON 檔案中（會覆蓋該顏色舊資料）
 - 可重複調整與存檔，每個顏色皆會獨立儲存其上下限區間
+- 點選「關閉程式」按鈕可結束校正工具
 
-⚠️ **注意：請務必先按 `r` 或 `b` 選擇目標顏色後再儲存，否則會覆蓋錯誤顏色資料！**
+⚠️ **注意：請確認點選正確的顏色儲存按鈕，否則會覆蓋錯誤顏色資料！**
 
 ### 2. 執行 `main.py` 啟動主系統
 
@@ -75,18 +74,29 @@ python main.py
 ## 📁 檔案結構簡述
 
 ```bash
-Platform_Crawler_Arduino_OpenCV/
+Platform_Arduino_OpenCV/
 ├── Arduino2ARM/
-│   └── arduino_python.ino     # Arduino 控制端程式碼
+│   ├── arduino/                    # Arduino 端程式碼資料夾
+│   │   └── arduino.ino             # Arduino 控制端程式碼
+│   └── python/                     # Python 端測試程式資料夾
+│       ├── serial_basic.py         # Python 端：基本序列埠傳送程式
+│       ├── serial_threading.py     # Python 端：多執行緒序列埠傳送程式
+│       └── camera_HSV.py           # Python 端：基本形狀辨識程式
 ├── OpenCV2Arduino/
 │   ├── __init__.py
-│   ├── color_config.json      # HSV 範圍設定檔，供辨識與調整共用
-│   ├── signal_sender.py       # 傳送對應代碼至 Arduino
-│   ├── state_manager.py       # 多幀穩定性判斷模組
-├── BRG_Bar.py                 # HSV 色彩調整工具（含即時滑桿與儲存功能）
-├── main.py                    # 啟動辨識流程的主程式（已整合偵測與 UI 功能）
+│   ├── app_ui.py                   # UI 類別（主程式用）
+│   ├── color_config.json           # HSV 範圍設定檔，供辨識與調整共用
+│   ├── signal_sender.py            # 傳送對應代碼至 Arduino
+│   ├── state_manager.py            # 多幀穩定性判斷模組
+├── BRG_Bar.py                      # HSV 參數儲存工具
+├── main.py                         # 啟動辨識流程的主程式
 └── README.md
 ```
+- **Arduino2ARM/arduino/**：Arduino 端程式碼。
+- **Arduino2ARM/python/**：Python 端測試與通訊程式碼。
+- **BRG_Bar.py**：提供 HSV 滑桿與紅/藍色儲存按鈕，方便調整與存檔。
+- **main.py**：主辨識流程，包含影像處理、形狀判斷、指令傳送與 UI。
+- **OpenCV2Arduino/**：模組化各功能（UI、Serial 傳送、狀態管理、HSV 設定
 
 ---
 
