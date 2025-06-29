@@ -2,6 +2,8 @@
 import cv2
 import numpy as np
 
+cap = cv2.VideoCapture(0) #<<< 依實際情況修改（0 通常是內建攝影機，1 是外接攝影機）
+
 # 建立滑桿視窗
 cv2.namedWindow("Sliders")
 cv2.resizeWindow("Sliders", 500, 350)
@@ -28,8 +30,7 @@ action_map = {
     'Hexagon': 'C',
 }
 
-# 開啟攝影機（預設編號為 0）依情況修改
-cap = cv2.VideoCapture(0)
+
 
 if not cap.isOpened():
     print("[錯誤] 無法開啟攝影機，請檢查攝影機。")
