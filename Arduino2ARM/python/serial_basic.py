@@ -2,7 +2,7 @@ import serial
 import time
 
 # 1. 設定 Arduino 的連接埠與速度
-arduino = serial.Serial('COM4', 9600)  # 請確認你的 Arduino 是 COM 幾
+arduino = serial.Serial('COM4', 9600)  # <<<< 請確認你的 Arduino  COM 跟 Baudrate
 time.sleep(2)  # 等待 Arduino 重啟
 print("Arduino準備好了！請輸入。輸入 Q 可退出程式。")
 
@@ -18,7 +18,7 @@ while True:
     arduino.write(command.encode())
     print("已傳送：", command)
 
-    time.sleep(6)  # 稍等一下讓 Arduino 有時間回傳
+    time.sleep(6)  # <<< 這裡可以調整等待時間長短
     while arduino.in_waiting > 0:
         response = arduino.readline().decode().strip()
         print("Arduino：", response)
