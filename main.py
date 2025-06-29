@@ -22,13 +22,13 @@ action_map = {
 # 在這裡設定 HSV 範圍與最小面積
 color_ranges = {
     "Red": {
-        "lower": [161, 186, 189],
-        "upper": [179, 255, 255],
+        "low": [25, 29, 233],
+        "high": [35, 123, 255],
         "min_area": 1500
     },
     "Blue": {
-        "lower": [98, 255, 139],
-        "upper": [116, 255, 221],
+        "low": [54, 84, 129],
+        "high": [84, 255, 201],
         "min_area": 1500
     }
 }
@@ -41,10 +41,10 @@ def detect_target(frame):
     detected_labels = []
 
     for color_name, cfg in color_ranges.items():
-        lower_np = np.array(cfg["lower"])
-        upper_np = np.array(cfg["upper"])
+        low_np = np.array(cfg["low"])
+        high_np = np.array(cfg["high"])
         min_area = cfg.get("min_area", 1000)
-        mask = cv2.inRange(hsv, lower_np, upper_np)  # 產生遮罩
+        mask = cv2.inRange(hsv, low_np, high_np)  # 產生遮罩
         mask_total = cv2.bitwise_or(mask_total, mask)
         cv2.imshow(f"{color_name} Mask", mask)  # 顯示遮罩
 
