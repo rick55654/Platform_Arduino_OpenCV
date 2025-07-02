@@ -3,13 +3,13 @@ import cv2
 import numpy as np
 from OpenCV2Arduino import SignalSender, StateManager, AppUI
 
-# ====== 主要參數設定 ======
-COM_PORT = 'COM4'        # <<< 這裡填寫你的 Arduino COM port
-BAUD_RATE = 9600         # <<< 這裡填寫你的 Serial Baudrate
-# ====== 攝影機設定 ======
-cap1 = cv2.VideoCapture(0)  # <<< 依實際情況修改（0 通常是內建攝影機，1 是外接攝影機）
+# ====== Main Parameter Settings ======
+COM_PORT = 'COM4'        # <<< Fill in your Arduino COM port here
+BAUD_RATE = 9600         # <<< Fill in your Serial Baudrate here
+# ====== Camera Settings ======
+cap1 = cv2.VideoCapture(0)  # <<< Modify as needed (0 is usually the built-in camera, 1 is external)
 
-# 顏色+形狀對應 Arduino 指令代碼（可依需求修改下方對應表）
+# Color + Shape to Arduino command code mapping (modify as needed)
 action_map = {
     ('Red', 'Triangle'): 'A',
     ('Red', 'Square'): 'B',
@@ -19,7 +19,7 @@ action_map = {
     ('Blue', 'Hexagon'): 'F',
 }
 
-# 在這裡設定 HSV 範圍與最小面積
+# Set HSV range and minimum area here
 color_ranges = {
     "Red": {
         "low": [25, 29, 233],
@@ -33,24 +33,24 @@ color_ranges = {
     }
 }
 
-# ====== 目標偵測主函式 ======
+# ====== Target Detection Main Function ======
 def detect_target(frame):
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # 轉 HSV
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # Convert to HSV
     result_frame = frame.copy()
-    mask_total = np.zeros(hsv.shape[:2], dtype=np.uint8)  # 全部遮罩
+    mask_total = np.zeros(hsv.shape[:2], dtype=np.uint8)  # Total mask
     detected_labels = []
 
     for color_name, cfg in color_ranges.items():
         low_np = np.array(cfg["low"])
         high_np = np.array(cfg["high"])
         min_area = cfg.get("min_area", 1000)
-        mask = cv2.inRange(hsv, low_np, high_np)  # 產生遮罩
+        mask = cv2.inRange(hsv, low_np, high_np)  # Generate mask
         mask_total = cv2.bitwise_or(mask_total, mask)
-        cv2.imshow(f"{color_name} Mask", mask)  # 顯示遮罩
+        cv2.imshow(f"{color_name} Mask", mask)  # Show mask
 
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for cnt in contours:
-            approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)  # 多邊形近似
+            approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)  # Polygon approximation
             x, y, w, h = cv2.boundingRect(approx)
             num_vertices = len(approx)
             area = cv2.contourArea(cnt)
@@ -75,34 +75,34 @@ def detect_target(frame):
                         0.7, (255, 255, 255), 2)
     return result_frame, detected_labels, mask_total
 
-# ====== 主程式 ======
+# ====== Main Program ======
 def main():
-    cap = cap1  # 使用攝影機
-    sender = SignalSender(port=COM_PORT, baudrate=BAUD_RATE)  # 建立 Serial 傳送物件
-    ui = AppUI()  # 建立 UI 物件
+    cap = cap1  # Use camera
+    sender = SignalSender(port=COM_PORT, baudrate=BAUD_RATE)  # Create Serial sender object
+    ui = AppUI()  # Create UI object
 
     if not cap.isOpened():
         print("[Main] Camera not accessible.")
         return
 
     print("[Main] System running. Press 'q' to quit.")
-    state_manager = StateManager()  # 狀態管理（多幀穩定判斷）
+    state_manager = StateManager()  # State management (multi-frame stable detection)
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
-        result_frame, labels, mask = detect_target(frame)  # 目標偵測
-        ui.update(frame, result_frame, mask, labels)       # 更新畫面
+        result_frame, labels, mask = detect_target(frame)  # Target detection
+        ui.update(frame, result_frame, mask, labels)       # Update UI
 
         if labels:
-            state_manager.update(labels[0])  # 有偵測到目標，更新狀態
+            state_manager.update(labels[0])  # Target detected, update state
         else:
-            stable_label = state_manager.update(None)  # 沒有偵測到，檢查是否有穩定結果
+            stable_label = state_manager.update(None)  # No detection, check for stable result
             if stable_label:
-                print(f"[Main] 穩定觸發：{stable_label}")
-                sender.send_async(stable_label)  # 非同步傳送訊號給 Arduino
+                print(f"[Main] Stable trigger: {stable_label}")
+                sender.send_async(stable_label)  # Asynchronously send signal to Arduino
 
         if ui.should_quit():
             break

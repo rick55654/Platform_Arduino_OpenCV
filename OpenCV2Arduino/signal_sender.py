@@ -6,22 +6,22 @@ import threading
 
 class SignalSender:
     """
-    負責與 Arduino 進行序列通訊的類別
-    可同步/非同步發送訊號，並自動監聽 Arduino 回傳訊息
+    Class responsible for serial communication with Arduino.
+    Supports synchronous/asynchronous signal sending and automatically listens for Arduino responses.
     """
 
     def __init__(self, port='COM5', baudrate=9600):
         """
-        初始化，連接指定的序列埠與鮑率
-        port: 你的 Arduino COM 埠 (如 'COM7')
-        baudrate: 通訊鮑率 (如 9600)
+        Initialize and connect to the specified serial port and baudrate.
+        port: Your Arduino COM port (e.g., 'COM7')
+        baudrate: Communication baudrate (e.g., 9600)
         """
         try:
             self.ser = serial.Serial(port, baudrate, timeout=1)
-            time.sleep(2)  # 等待 Arduino 重置
+            time.sleep(2)  # Wait for Arduino to reset
             print(f"[SignalSender] Connected to {port} at {baudrate} baud.")
             self.running = True
-            # 啟動背景執行緒監聽 Arduino 回傳
+            # Start background thread to listen for Arduino responses
             threading.Thread(target=self.listen_to_serial, daemon=True).start()
         except serial.SerialException as e:
             print(f"[SignalSender] Error: {e}")
@@ -30,8 +30,8 @@ class SignalSender:
 
     def send(self, signal: str):
         """
-        同步發送訊號到 Arduino
-        signal: 欲發送的字串 (如 'A', 'B', ...)
+        Synchronously send a signal to Arduino.
+        signal: String to send (e.g., 'A', 'B', ...)
         """
         if self.ser and self.ser.is_open:
             self.ser.write(signal.encode())
@@ -39,13 +39,13 @@ class SignalSender:
 
     def send_async(self, signal: str):
         """
-        非同步發送訊號（不會阻塞主程式）
+        Asynchronously send a signal (non-blocking).
         """
         threading.Thread(target=self.send, args=(signal,), daemon=True).start()
 
     def listen_to_serial(self):
         """
-        持續監聽 Arduino 回傳的訊息，並即時顯示
+        Continuously listen for Arduino responses and display them in real time.
         """
         while self.running and self.ser and self.ser.is_open:
             try:
@@ -59,7 +59,7 @@ class SignalSender:
 
     def close(self):
         """
-        關閉序列連線，釋放資源
+        Close the serial connection and release resources.
         """
         self.running = False
         if self.ser and self.ser.is_open:

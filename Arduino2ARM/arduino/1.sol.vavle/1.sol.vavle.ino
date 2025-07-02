@@ -1,6 +1,6 @@
-const int VALVE_ENB = 2;     // 電磁閥 ENB (PWM)
-const int VALVE_IN4 = 3;     // 電磁閥 IN4
-const int VALVE_IN3 = 4;     // 電磁閥 IN3
+const int VALVE_ENB = 2;     // Solenoid valve ENB (PWM)
+const int VALVE_IN4 = 3;     // Solenoid valve IN4
+const int VALVE_IN3 = 4;     // Solenoid valve IN3
 const int VALVE_PWM = 255;
 
 void setup() {
@@ -10,14 +10,14 @@ void setup() {
   delay(1000);
 }
 
-// 電磁閥打開
+// Open solenoid valve (exhaust)
 void valveOpenExhaust() {
   digitalWrite(VALVE_IN3, LOW);
   digitalWrite(VALVE_IN4, HIGH);
   analogWrite(VALVE_ENB, VALVE_PWM);
 }
 
-// 電磁閥封閉
+// Close solenoid valve (seal)
 void valveCloseExhaust() {
   digitalWrite(VALVE_IN3, LOW);
   digitalWrite(VALVE_IN4, LOW);
@@ -25,8 +25,8 @@ void valveCloseExhaust() {
 }
 
 void loop() {
-  valveOpenExhaust(); // 電磁閥打開
-  delay(100);         // 電磁閥打開0.1秒
-  valveCloseExhaust();// 電磁閥關閉
-  delay(100);         // 電磁閥關閉0.1秒
+  valveOpenExhaust(); // Open solenoid valve
+  delay(100);         // Valve open for 0.1 second
+  valveCloseExhaust();// Close solenoid valve
+  delay(100);         // Valve closed for 0.1 second
 }

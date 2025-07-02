@@ -1,55 +1,52 @@
-# 攝影機畫面擷取、HSV遮罩拉桿＋圖形辨識
+# Camera capture, HSV mask sliders + shape recognition
 import cv2
 import numpy as np
 
-cap = cv2.VideoCapture(0) #<<< 依實際情況修改（0 通常是內建攝影機，1 是外接攝影機）
+cap = cv2.VideoCapture(0) #<<< Modify as needed (0 is usually the built-in camera, 1 is external)
 
-# 建立滑桿視窗
+# Create slider window
 cv2.namedWindow("Sliders")
 cv2.resizeWindow("Sliders", 500, 350)
 
 def nothing(x):
-    # print("[!] 滑桿值變更hahaha")
-    # 滑桿回呼函式，不做任何事
+    # Slider callback function, does nothing
     pass
 
-# 建立 HSV 範圍的滑桿（H: 色相, S: 飽和度, V: 明度）
+# Create HSV range sliders (H: Hue, S: Saturation, V: Value)
 cv2.createTrackbar("H Low", "Sliders", 0, 179, nothing)
 cv2.createTrackbar("H High", "Sliders", 179, 179, nothing)
 cv2.createTrackbar("S Low", "Sliders", 0, 255, nothing)
 cv2.createTrackbar("S High", "Sliders", 255, 255, nothing)
 cv2.createTrackbar("V Low", "Sliders", 0, 255, nothing)
 cv2.createTrackbar("V High", "Sliders", 255, 255, nothing)
-# 建立最小面積的滑桿（用於過濾雜訊與小圖形）
+# Create minimum area slider (for filtering noise and small shapes)
 cv2.createTrackbar("Min Area", "Sliders", 0, 10000, nothing)
 
-# 圖形對應動作
+# Shape to action mapping
 action_map = {
     'Triangle': 'A',
     'Square': 'B',
     'Hexagon': 'C',
 }
 
-
-
 if not cap.isOpened():
-    print("[錯誤] 無法開啟攝影機，請檢查攝影機。")
+    print("[Error] Cannot open camera, please check your camera.")
     exit()
 
-print("[整合模組] 調整 HSV 與面積拉桿，按 q 離開")
+print("[Module] Adjust HSV and area sliders, press q to exit.")
 
 while True:
-    # 讀取攝影機畫面
+    # Read camera frame
     ret, frame = cap.read()
     
     if not ret:
-        print("[錯誤] 無法讀取攝影機畫面。")
+        print("[Error] Cannot read camera frame.")
         break
     
-    # 將 BGR 影像轉換為 HSV 色彩空間
+    # Convert BGR image to HSV color space
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-    # 取得拉桿數值
+    # Get slider values
     h_low = cv2.getTrackbarPos("H Low", "Sliders")
     h_high = cv2.getTrackbarPos("H High", "Sliders")
     s_low = cv2.getTrackbarPos("S Low", "Sliders")
@@ -58,29 +55,29 @@ while True:
     v_high = cv2.getTrackbarPos("V High", "Sliders")
     min_area = cv2.getTrackbarPos("Min Area", "Sliders")
 
-    # 根據 HSV 滑桿數值產生遮罩（只保留指定顏色範圍）
+    # Generate mask based on HSV slider values (keep only specified color range)
     lower_np = np.array([h_low, s_low, v_low])
     upper_np = np.array([h_high, s_high, v_high])
     mask = cv2.inRange(hsv, lower_np, upper_np)
 
-    # 將遮罩應用到原始影像，得到過濾後的結果
+    # Apply mask to original image to get filtered result
     filtered = cv2.bitwise_and(frame, frame, mask=mask)
 
-    # 複製原始畫面，用於畫出辨識結果
+    # Copy original frame for drawing recognition results
     result_frame = frame.copy()
 
-    # 找出遮罩中的所有輪廓
+    # Find all contours in the mask
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        # 多邊形近似，取得輪廓的頂點數
+        # Polygon approximation, get number of vertices
         approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)
-        x, y, w, h = cv2.boundingRect(approx) # 外接矩形
-        area = cv2.contourArea(cnt)           # 輪廓面積
-        num_vertices = len(approx)            # 多邊形頂點數
-        aspect_ratio = w / h if h != 0 else 0 # 長寬比
+        x, y, w, h = cv2.boundingRect(approx) # Bounding rectangle
+        area = cv2.contourArea(cnt)           # Contour area
+        num_vertices = len(approx)            # Number of polygon vertices
+        aspect_ratio = w / h if h != 0 else 0 # Aspect ratio
 
         shape = None
-        # 根據頂點數與面積判斷圖形類型
+        # Determine shape type based on number of vertices and area
         if num_vertices == 3 and area >= min_area:
             shape = "Triangle"
         elif num_vertices == 4 and 0.8 < aspect_ratio < 1.2 and area >= min_area:
@@ -91,35 +88,35 @@ while True:
         if shape:
             label = action_map.get(shape)
             if label:
-                # 畫出多邊形輪廓
+                # Draw polygon contour
                 cv2.drawContours(result_frame, [approx], -1, (0, 0, 255), 2)
-                # 在結果畫面上畫出外框與圖形名稱、對應動作與面積
+                # Draw bounding box, shape name, action, and area on result frame
                 cv2.putText(result_frame,
-                            f"{shape} ({label}){int(area)}",  # 顯示圖形名稱、動作、面積
+                            f"{shape} ({label}){int(area)}",  # Show shape, action, area
                             (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
                             0.7, (255, 255, 255), 2)
 
-    # --- 合併顯示四個畫面 ---
-    # 先將所有畫面調整為相同大小
+    # --- Merge and display four views ---
+    # Resize all frames to the same size
     h_show, w_show = 320, 480
-    show_result = cv2.resize(result_frame, (w_show, h_show))   # 左上：圖形辨識結果
-    show_filtered = cv2.resize(filtered, (w_show, h_show))     # 右上：過濾後畫面
-    show_camera = cv2.resize(frame, (w_show, h_show))          # 左下：原始畫面
-    show_mask = cv2.cvtColor(cv2.resize(mask, (w_show, h_show)), cv2.COLOR_GRAY2BGR) # 右下：遮罩
+    show_result = cv2.resize(result_frame, (w_show, h_show))   # Top left: shape recognition result
+    show_filtered = cv2.resize(filtered, (w_show, h_show))     # Top right: filtered frame
+    show_camera = cv2.resize(frame, (w_show, h_show))          # Bottom left: original frame
+    show_mask = cv2.cvtColor(cv2.resize(mask, (w_show, h_show)), cv2.COLOR_GRAY2BGR) # Bottom right: mask
 
-    # 上下合併
+    # Merge top and bottom
     top = np.hstack((show_result, show_filtered))
     bottom = np.hstack((show_camera, show_mask))
     merged = np.vstack((top, bottom))
 
-    # 顯示合併後的畫面
+    # Show merged frame
     cv2.imshow("All-in-One View", merged)
 
-    # 按下 q 鍵離開程式
+    # Press q to exit the program
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        print("[!] 結束程式")
+        print("[!] Program ended")
         break
 
-# 釋放攝影機資源並關閉所有視窗
+# Release camera resources and close all windows
 cap.release()
 cv2.destroyAllWindows()

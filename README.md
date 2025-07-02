@@ -1,15 +1,15 @@
 # Platform_Arduino_OpenCV
 
-本專案為一套整合影像辨識與 Arduino 控制的機器手臂控制系統，
-可針對紅色與藍色的「三角形」、「正方形」、「六邊形」目標物進行辨識，並傳送指令給機器手臂執行動作。
+This project is an integrated machine arm control system combining image recognition and Arduino control.
+It can recognize red and blue "triangle", "square", and "hexagon" targets, and send commands to the robotic arm for action.
 
 ---
 
-## 📦 安裝必要模組
+## 📦 Required Module Installation
 
-請先安裝以下必要模組（建議使用 Python 3.8+）
+Please install the following required modules (Python 3.8+ recommended):
 
-> 本專案需用到 opencv-python、numpy、pyserial，請務必先安裝！
+> This project requires opencv-python, numpy, and pyserial. Please install them first!
 
 ```bash
 pip install opencv-python pyserial numpy
@@ -17,69 +17,69 @@ pip install opencv-python pyserial numpy
 
 ---
 
-## 🔧 系統架構
+## 🔧 System Architecture
 
-- **OpenCV 模組**：負責即時攝影機影像擷取、HSV 遮罩與輪廓辨識。
-- **主控程式 (`main.py`)**：執行辨識流程、穩定狀態判定、傳送控制訊號。
-- **訊號傳送 (`signal_sender.py`)**：將辨識結果透過 Serial 傳送至 Arduino。
-- **狀態管理 (`state_manager.py`)**：多幀穩定性判斷模組。
+- **OpenCV Module**: Responsible for real-time camera image capture, HSV masking, and contour recognition.
+- **Main Program (`main.py`)**: Executes the recognition process, stable state judgment, and sends control signals.
+- **Signal Sender (`signal_sender.py`)**: Sends recognition results to Arduino via Serial.
+- **State Manager (`state_manager.py`)**: Multi-frame stability judgment module.
 
 ---
 
-## 🎯 目標物偵測邏輯
+## 🎯 Target Detection Logic
 
-1. **攝影機畫面擷取**：主程式持續從攝影機取得即時影像。
-2. **HSV 色彩空間轉換**：將 BGR 影像轉換為 HSV，方便進行顏色遮罩。
-3. **遮罩與輪廓偵測**：根據 HSV 範圍產生遮罩，並尋找所有輪廓。
-4. **多邊形近似與形狀判斷**：對每個輪廓進行多邊形近似，根據頂點數、面積、長寬比判斷形狀（三角形、正方形、六邊形）。
-5. **比對動作對應表**：根據顏色與形狀組合查詢 `action_map`，取得對應 Arduino 指令。
-6. **多幀穩定性判斷**：利用 `StateManager`，只有當辨識結果穩定出現多幀才會觸發指令傳送，避免閃爍誤判。
-7. **畫面即時標註**：於畫面上即時標註偵測到的形狀、面積與對應代碼，並顯示遮罩畫面。
-8. **指令傳送**：穩定辨識後，將對應代碼透過 Serial 傳送至 Arduino 執行動作。
+1. **Camera Frame Capture**: The main program continuously captures real-time images from the camera.
+2. **HSV Color Space Conversion**: Converts BGR images to HSV for easier color masking.
+3. **Masking and Contour Detection**: Generates masks based on HSV ranges and finds all contours.
+4. **Polygon Approximation and Shape Judgment**: Approximates each contour as a polygon and determines the shape (triangle, square, hexagon) based on the number of vertices, area, and aspect ratio.
+5. **Action Mapping**: Looks up the `action_map` for the corresponding Arduino command based on color and shape.
+6. **Multi-frame Stability Judgment**: Uses `StateManager` to trigger command sending only when the recognition result is stable for multiple frames, avoiding flicker misjudgment.
+7. **Real-time Annotation**: Annotates detected shapes, area, and corresponding code on the screen in real time, and displays the mask view.
+8. **Command Sending**: After stable recognition, sends the corresponding code to Arduino via Serial for action.
 
-### 2. 執行 `main.py` 啟動主系統
+### 2. Run `main.py` to Start the Main System
 
 ```bash
 python main.py
 ```
 
-功能說明：
+Function Description:
 
-- 系統持續進行影像分析與物件辨識
-- 當辨識結果穩定達成條件（如紅色+三角形）時：
-  - 會在畫面上顯示「Detected: `['A']`」這類代碼
-  - 並透過 Serial 傳送對應訊號至 Arduino 進行後續控制
+- The system continuously performs image analysis and object recognition.
+- When the recognition result is stable and meets the condition (e.g., red + triangle):
+  - The code such as "Detected: `['A']`" will be displayed on the screen.
+  - The corresponding signal will be sent to Arduino via Serial for further control.
 
 ---
 
-## 📁 檔案結構簡述
+## 📁 File Structure Overview
 
 ```bash
 Platform_Arduino_OpenCV/
 ├── Arduino2ARM/
-│   ├── arduino/                    # Arduino 端程式碼資料夾
-│   │   └── arduino.ino             # Arduino 控制端程式碼
-│   └── python/                     # Python 端測試程式資料夾
-│       ├── serial_basic.py         # Python 端：基本序列埠傳送程式
-│       └── camera_HSV.py           # Python 端：基本形狀辨識程式
+│   ├── arduino/                    # Arduino code folder
+│   │   └── arduino.ino             # Arduino control code
+│   └── python/                     # Python test code folder
+│       ├── serial_basic.py         # Python: basic serial communication script
+│       └── camera_HSV.py           # Python: basic shape recognition script
 ├── OpenCV2Arduino/
 │   ├── __init__.py
-│   ├── app_ui.py                   # UI 類別（主程式用）
-│   ├── color_config.json           # HSV 範圍設定檔，供辨識與調整共用
-│   ├── signal_sender.py            # 傳送對應代碼至 Arduino
-│   ├── state_manager.py            # 多幀穩定性判斷模組
-├── main.py                         # 啟動辨識流程的主程式
+│   ├── app_ui.py                   # UI class (for main program)
+│   ├── color_config.json           # HSV range config file for recognition and adjustment
+│   ├── signal_sender.py            # Sends corresponding code to Arduino
+│   ├── state_manager.py            # Multi-frame stability judgment module
+├── main.py                         # Main program for recognition process
 └── README.md
 ```
-- **Arduino2ARM/arduino/**：Arduino 端程式碼。
-- **Arduino2ARM/python/**：Python 端測試與通訊程式碼。
-- **main.py**：主辨識流程，包含影像處理、形狀判斷、指令傳送與 UI。
-- **OpenCV2Arduino/**：模組化各功能（UI、Serial 傳送、狀態管理）。
+- **Arduino2ARM/arduino/**: Arduino side code.
+- **Arduino2ARM/python/**: Python test and communication scripts.
+- **main.py**: Main recognition process, including image processing, shape judgment, command sending, and UI.
+- **OpenCV2Arduino/**: Modularized functions (UI, Serial sending, state management).
 
 ---
 
-## 👨‍💻 作者
+## 👨‍💻 Author
 
-本專案原始作者為 [ray-uncoding](https://github.com/ray-uncoding)，
-現有程式碼已根據本次台科盃活動需求進行調整與簡化（如主程式結構、偵測邏輯等），
-大部分內容與原版不同，請依本說明文件與程式碼為主
+The original author of this project is [ray-uncoding](https://github.com/ray-uncoding).
+The current code has been adjusted and simplified for the NTUST Cup event (such as main program structure, detection logic, etc.).
+Most of the content is different from the original version. Please refer to this documentation and code.

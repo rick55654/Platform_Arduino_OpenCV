@@ -1,101 +1,102 @@
 // Taiwan_TEC.ino
 // =============================
-// Arduino 控制空氣泵、步進馬達與電磁閥教學範例
+// Arduino control example for air pump, stepper motor, and solenoid valve
 // =============================
-// 本程式示範如何以指令控制一組氣動與步進馬達系統，並以註解詳細說明每個步驟。
+// This program demonstrates how to control a pneumatic and stepper motor system via commands,
+// with detailed comments for each step.
 //
-// [硬體連接說明]
-// IN1, IN2, ENA: 控制空氣泵馬達（M1）
-// IN3, IN4, ENB: 控制電磁閥
-// limit1, limit2: 兩個限位開關（安全保護）
-// STEP_PIN, DIR_PIN: 步進馬達控制腳位
+// [Hardware Connection]
+// IN1, IN2, ENA: Control air pump motor (M1)
+// IN3, IN4, ENB: Control solenoid valve
+// limit1, limit2: Two limit switches (safety protection)
+// STEP_PIN, DIR_PIN: Stepper motor control pins
 //
-// [指令說明]
-// 透過序列埠輸入 A~F 指令，控制馬達旋轉圈數
+// [Command Description]
+// Send commands A~F via serial port to control the number of motor rotations
 //
 // =============================
 
-// === 腳位定義 ===
-const int VALVE_ENB = 2;     // 電磁閥 ENB (PWM)
-const int VALVE_IN4 = 3;     // 電磁閥 IN4
-const int VALVE_IN3 = 4;     // 電磁閥 IN3
-const int AIRPUMP_IN2 = 5;   // 空氣泵馬達 IN2
-const int AIRPUMP_IN1 = 6;   // 空氣泵馬達 IN1
-const int AIRPUMP_ENA = 7;   // 空氣泵馬達 ENA (PWM)
-const int LIMIT1_PIN = 9;    // 限位開關1
-const int LIMIT2_PIN = 10;   // 限位開關2
-const int DIR_PIN = 12;      // 步進馬達 DIR
-const int STEP_PIN = 13;     // 步進馬達 STEP
+// === Pin Definitions ===
+const int VALVE_ENB = 2;     // Solenoid valve ENB (PWM)
+const int VALVE_IN4 = 3;     // Solenoid valve IN4
+const int VALVE_IN3 = 4;     // Solenoid valve IN3
+const int AIRPUMP_IN2 = 5;   // Air pump motor IN2
+const int AIRPUMP_IN1 = 6;   // Air pump motor IN1
+const int AIRPUMP_ENA = 7;   // Air pump motor ENA (PWM)
+const int LIMIT1_PIN = 9;    // Limit switch 1
+const int LIMIT2_PIN = 10;   // Limit switch 2
+const int DIR_PIN = 12;      // Stepper motor DIR
+const int STEP_PIN = 13;     // Stepper motor STEP
 
-// === 參數常數 ===
-const int STEPS_PER_REV = 200;      // 步進馬達一圈步數
-const int AIRPUMP_PWM = 130;        // 空氣泵 PWM 速度
-const int VALVE_PWM = 255;          // 電磁閥 PWM 速度
-const int MAX_STEPS = 1800;         // 步進馬達最大步數（安全保護）
+// === Parameter Constants ===
+const int STEPS_PER_REV = 200;      // Steps per revolution for stepper motor
+const int AIRPUMP_PWM = 130;        // Air pump PWM speed
+const int VALVE_PWM = 255;          // Solenoid valve PWM speed
+const int MAX_STEPS = 1800;         // Maximum stepper steps (safety protection)
 
-// === 狀態變數 ===
-String serialInput = "";            // 序列埠輸入指令
+// === State Variables ===
+String serialInput = "";            // Serial input command
 
-// 空氣泵狀態
-int airpumpPhase = 0;               // 0: 等待指令接收  1: 充氣  2: 全部停止
+// Air pump state
+int airpumpPhase = 0;               // 0: Waiting for command  1: Inflating  2: All stopped
 
-// 步進馬達狀態
-int stepperPhase = 0;               // 0: 停止  1: 正轉  2: 停止  3: 反轉
-int totalSteps = 0;                 // 目標步數
-int stepperStepCount = 0;           // 已走步數
+// Stepper motor state
+int stepperPhase = 0;               // 0: Stop  1: Forward  2: Stop  3: Backward
+int totalSteps = 0;                 // Target steps
+int stepperStepCount = 0;           // Steps taken
 
 // =============================
-// 初始化
+// Initialization
 // =============================
 void setup() {
-  Serial.begin(9600); // 啟動序列通訊
-  // 設定所有腳位模式
+  Serial.begin(9600); // Start serial communication
+  // Set all pin modes
   pinMode(AIRPUMP_IN1, OUTPUT); pinMode(AIRPUMP_IN2, OUTPUT); pinMode(AIRPUMP_ENA, OUTPUT);
   pinMode(VALVE_IN3, OUTPUT);   pinMode(VALVE_IN4, OUTPUT);   pinMode(VALVE_ENB, OUTPUT);
   pinMode(DIR_PIN, OUTPUT);     pinMode(STEP_PIN, OUTPUT);
   pinMode(LIMIT1_PIN, INPUT_PULLUP); pinMode(LIMIT2_PIN, INPUT_PULLUP);
-  delay(1000); // 啟動後延遲 1 秒
+  delay(1000); // Delay 1 second after startup
 }
 
 // =============================
-// 控制函式區
+// Control Functions
 // =============================
-// 啟動空氣泵
+// Start air pump
 void airpumpStart() {
   digitalWrite(AIRPUMP_IN1, HIGH);
   digitalWrite(AIRPUMP_IN2, LOW);
   analogWrite(AIRPUMP_ENA, AIRPUMP_PWM);
 }
-// 停止空氣泵
+// Stop air pump
 void airpumpStop() {
   digitalWrite(AIRPUMP_IN1, LOW);
   digitalWrite(AIRPUMP_IN2, LOW);
   analogWrite(AIRPUMP_ENA, 0);
 }
-// 步進馬達走一步（速度控制）
+// Stepper motor single step (speed control)
 void stepperStep() {
   digitalWrite(STEP_PIN, HIGH);
-  delayMicroseconds(500); // 控制速度
+  delayMicroseconds(500); // Control speed
   digitalWrite(STEP_PIN, LOW);
   delayMicroseconds(500);
 }
-// 步進馬達正轉一步
+// Stepper motor forward one step
 void stepperForward() {
   digitalWrite(DIR_PIN, HIGH);
   stepperStep();
 }
-// 步進馬達反轉一步
+// Stepper motor backward one step
 void stepperBackward() {
   digitalWrite(DIR_PIN, LOW);
   stepperStep();
 }
-// 電磁閥封閉（關閉排氣）
+// Solenoid valve closed (close exhaust)
 void valveCloseExhaust() {
   digitalWrite(VALVE_IN3, LOW);
   digitalWrite(VALVE_IN4, LOW);
   analogWrite(VALVE_ENB, 0);
 }
-// 電磁閥打開（打開排氣）
+// Solenoid valve open (open exhaust)
 void valveOpenExhaust() {
   digitalWrite(VALVE_IN3, LOW);
   digitalWrite(VALVE_IN4, HIGH);
@@ -103,10 +104,10 @@ void valveOpenExhaust() {
 }
 
 // =============================
-// 主流程 loop
+// Main loop
 // =============================
 void loop() {
-  // 0. 碰到限位，結束流程
+  // 0. If limit switch is triggered, end process
   if (digitalRead(LIMIT1_PIN) == LOW || digitalRead(LIMIT2_PIN) == LOW) {
     airpumpPhase = 0;
     stepperPhase = 0;
@@ -117,73 +118,73 @@ void loop() {
     return;
   }
 
-  // 1. 讀取序列埠指令（只在系統閒置時）
+  // 1. Read serial command (only when system is idle)
   if (Serial.available() && airpumpPhase == 0) {
     serialInput = Serial.readStringUntil('\n');
     serialInput.trim();
   }
-  // 2. 執行中時清空序列緩衝區，避免誤讀
+  // 2. When running, clear serial buffer to avoid misreading
   if (airpumpPhase != 0) {
     while (Serial.available()) Serial.read();
   }
 
-  // 3. 處理輸入指令，決定步數
+  // 3. Process input command and determine steps
   if (serialInput != "") {
     airpumpPhase = 1;
     if (serialInput == "A" || serialInput == "D") {
-      totalSteps = STEPS_PER_REV * 3; // 轉 3 圈
+      totalSteps = STEPS_PER_REV * 3; // Rotate 3 turns
       Serial.println("Go to first box");
     } else if (serialInput == "B" || serialInput == "E") {
-      totalSteps = STEPS_PER_REV * 5; // 轉 5 圈
+      totalSteps = STEPS_PER_REV * 5; // Rotate 5 turns
       Serial.println("Go to second box");
     } else if (serialInput == "C" || serialInput == "F") {
-      totalSteps = STEPS_PER_REV * 7; // 轉 7 圈
+      totalSteps = STEPS_PER_REV * 7; // Rotate 7 turns
       Serial.println("Go to last box");
     } else {
       Serial.println("Nothing");
     }
 
-  // 4. 安全保護
-    if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps,太多圈了!!!");}
-    if (AIRPUMP_PWM >= 140) {Serial.println("airpump too fast,打氣馬達太快了!!!");}
+    // 4. Safety protection
+    if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps!!!");}
+    if (AIRPUMP_PWM >= 140) {Serial.println("airpump too fast!!!");}
 
     serialInput = "";
   }
 
-  // 5. 空氣泵控制
+  // 5. Air pump control
   if (airpumpPhase == 1 && totalSteps > 0 && totalSteps < MAX_STEPS && AIRPUMP_PWM < 140) {
     delay(5000);
     airpumpStart();
-    delay(1500);
+    delay(1500); // inflate for 1.5 seconds
     airpumpStop();
     delay(500);
     airpumpPhase = 2;
     stepperPhase = 1;
   }
 
-  // 6. 步進馬達正轉
+  // 6. Stepper motor forward
   if (stepperPhase == 1) {
     stepperForward();
     stepperStepCount++;
   }
 
-  // 7. 正轉完成，進入排氣等待
+  // 7. After forward, enter exhaust wait
   if (stepperPhase == 1 && stepperStepCount >= totalSteps) {
     stepperPhase = 2;
-    delay(1000); // 教學用：觀察
+    delay(1000); // For demonstration: observe
     valveOpenExhaust();
     delay(1000);
     stepperStepCount = 0;
     stepperPhase = 3;
   }
   
-  //8. 步進馬達反轉
+  // 8. Stepper motor backward
   if (stepperPhase == 3) {
     stepperBackward();
     stepperStepCount++;
   }
 
-  // 9. 反轉完成，結束流程
+  // 9. After backward, end process
   if (stepperPhase == 3 && stepperStepCount >= totalSteps) {
     Serial.println("Over");
     airpumpPhase = 0;

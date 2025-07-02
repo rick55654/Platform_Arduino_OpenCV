@@ -24,4 +24,4 @@ class AppUI:
 
     def should_quit(self):
         key = cv2.waitKey(1) & 0xFF
-        return key == ord('q') or key == 27  # 按 q 或 ESC 都可以
+        return key == ord('q') or key == 27  # Press q or ESC to quit

@@ -1,79 +1,79 @@
-const int LIMIT1_PIN = 9;    // 限位開關1
-const int LIMIT2_PIN = 10;   // 限位開關2
-const int DIR_PIN = 12;      // 步進馬達 DIR
-const int STEP_PIN = 13;     // 步進馬達 STEP
+const int LIMIT1_PIN = 9;    // Limit switch 1
+const int LIMIT2_PIN = 10;   // Limit switch 2
+const int DIR_PIN = 12;      // Stepper motor DIR
+const int STEP_PIN = 13;     // Stepper motor STEP
 
 
-// === 參數常數 ===
-const int STEPS_PER_REV = 200;      // 步進馬達一圈步數
-const int MAX_STEPS = 1800;         // 步進馬達最大步數（安全保護）
+// === Parameter Constants ===
+const int STEPS_PER_REV = 200;      // Steps per revolution for stepper motor
+const int MAX_STEPS = 1800;         // Maximum stepper steps (safety protection)
 
-// === 狀態變數 ===
-String serialInput = "";            // 序列埠輸入指令
+// === State Variables ===
+String serialInput = "";            // Serial input command
 
-// 步進馬達狀態
-int stepperPhase = 0;               // 0: 停止  1: 正轉  2: 停止  3: 反轉
-int totalSteps = 0;                 // 目標步數
-int stepperStepCount = 0;           // 已走步數
+// Stepper motor state
+int stepperPhase = 0;               // 0: Stop  1: Forward  2: Stop  3: Backward
+int totalSteps = 0;                 // Target steps
+int stepperStepCount = 0;           // Steps taken
 
 void setup() {
-  Serial.begin(9600); // 啟動序列通訊
+  Serial.begin(9600); // Start serial communication
   pinMode(DIR_PIN, OUTPUT);     
   pinMode(STEP_PIN, OUTPUT);
   pinMode(LIMIT1_PIN, INPUT_PULLUP); 
   pinMode(LIMIT2_PIN, INPUT_PULLUP);
-  delay(1000); // 啟動後延遲 1 秒
+  delay(1000); // Delay 1 second after startup
 }
 
-// 步進馬達走一步（速度控制）
+// Stepper motor single step (speed control)
 void stepperStep() {
   digitalWrite(STEP_PIN, HIGH);
-  delayMicroseconds(500); // 控制速度
+  delayMicroseconds(500); // Control speed
   digitalWrite(STEP_PIN, LOW);
   delayMicroseconds(500);
 }
 
-// 步進馬達正轉一步
+// Stepper motor forward one step
 void stepperForward() {
   digitalWrite(DIR_PIN, HIGH);
   stepperStep();
 }
-// 步進馬達反轉一步
+// Stepper motor backward one step
 void stepperBackward() {
   digitalWrite(DIR_PIN, LOW);
   stepperStep();
 }
 
 void loop() {
-  // 1. 即時停止步進馬達
-  if (digitalRead(LIMIT1_PIN) == HIGH || digitalRead(LIMIT2_PIN) == HIG){
+  // 1. Immediately stop stepper motor if limit switch is triggered
+  if (digitalRead(LIMIT1_PIN) == HIGH || digitalRead(LIMIT2_PIN) == HIGH){
     stepperPhase = 0;
     stepperStepCount = 0;
     Serial.println("Over");
   }
   
-  // 2. 讀取序列埠指令（只在系統閒置時）
+  // 2. Read serial command (only when system is idle)
   if (Serial.available() && stepperPhase == 0) {
     serialInput = Serial.readStringUntil('\n');
     serialInput.trim();
   }
   
-  // 3. 執行中時清空序列緩衝區，避免誤讀
+  // 3. When running, clear serial buffer to avoid misreading
   if (stepperPhase != 0) {
     while (Serial.available()) Serial.read();
   }
 
-  // 4. 處理輸入指令，決定步數
+  // 4. Process input command and determine steps
   if (serialInput != "") {
     stepperPhase = 1;
     if (serialInput == "A" || serialInput == "D") {
-      totalSteps = STEPS_PER_REV * 3; // 轉 3 圈
+      totalSteps = STEPS_PER_REV * 3; // Rotate 3 turns
       Serial.println("Go to first box");
     } else if (serialInput == "B" || serialInput == "E") {
-      totalSteps = STEPS_PER_REV * 5; // 轉 5 圈
+      totalSteps = STEPS_PER_REV * 5; // Rotate 5 turns
       Serial.println("Go to second box");
     } else if (serialInput == "C" || serialInput == "F") {
-      totalSteps = STEPS_PER_REV * 7; // 轉 7 圈
+      totalSteps = STEPS_PER_REV * 7; // Rotate 7 turns
       Serial.println("Go to last box");
     } else {
       Serial.println("Nothing");
@@ -81,29 +81,29 @@ void loop() {
     }
     serialInput = "";
     
-    if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps,太多圈了!!!");}
+    if (totalSteps >= STEPS_PER_REV * 9) {Serial.println("too many steps!!!");}
   }
   
-  // 5. 步進馬達正轉
+  // 5. Stepper motor forward
   if (stepperPhase == 1) {
     stepperForward();
     stepperStepCount++;
   }
 
-  // 6. 正轉完成，進入排氣等待
+  // 6. After forward, enter exhaust wait
   if (stepperPhase == 1 && stepperStepCount >= totalSteps) {
     stepperPhase = 2;
     stepperStepCount = 0;
     stepperPhase = 3;
   }
   
-  // 7. 步進馬達反轉
+  // 7. Stepper motor backward
   if (stepperPhase == 3) {
     stepperBackward();
     stepperStepCount++;
   }
 
-  // 8. 反轉完成或碰到限位，結束流程
+  // 8. After backward or limit triggered, end process
   if (stepperPhase == 3 && stepperStepCount >= totalSteps) {
     stepperPhase = 0;
     stepperStepCount = 0;

@@ -1,11 +1,11 @@
-// === 腳位定義 ===
-const int AIRPUMP_IN2 = 5;   // 空氣泵馬達 IN2
-const int AIRPUMP_IN1 = 6;   // 空氣泵馬達 IN1
-const int AIRPUMP_ENA = 7;   // 空氣泵馬達 ENA (PWM)
-const int AIRPUMP_PWM = 130; // 空氣泵 PWM 速度
+// === Pin Definitions ===
+const int AIRPUMP_IN2 = 5;   // Air pump motor IN2
+const int AIRPUMP_IN1 = 6;   // Air pump motor IN1
+const int AIRPUMP_ENA = 7;   // Air pump motor ENA (PWM)
+const int AIRPUMP_PWM = 130; // Air pump PWM speed
 
-// 空氣泵狀態
-int airpumpPhase = 0;        // 0:初始狀態  1:充氣  2:停止
+// Air pump state
+int airpumpPhase = 0;        // 0: Initial state  1: Inflating  2: Stopped
 
 void setup() {
   pinMode(AIRPUMP_IN1, OUTPUT); 
@@ -14,14 +14,14 @@ void setup() {
   delay(1000);
 }
 
-// 啟動空氣泵
+// Start air pump
 void airpumpStart() {
   digitalWrite(AIRPUMP_IN1, HIGH);
   digitalWrite(AIRPUMP_IN2, LOW);
   analogWrite(AIRPUMP_ENA, AIRPUMP_PWM);
 }
 
-// 停止空氣泵
+// Stop air pump
 void airpumpStop() {
   digitalWrite(AIRPUMP_IN1, LOW);
   digitalWrite(AIRPUMP_IN2, LOW);
@@ -29,16 +29,16 @@ void airpumpStop() {
 }
 
 void loop() {
-  // 1.(安全保護, !!勿動!!)
+  // 1. (Safety protection, do not modify!!)
   if (AIRPUMP_PWM <= 140 && airpumpPhase == 0){airpumpPhase = 1;}
-  else if (AIRPUMP_PWM > 140) {Serial.println("airpump too fast,打氣馬達太快了!!!");}
+  else if (AIRPUMP_PWM > 140) {Serial.println("airpump too fast!!!");}
 
-  // 2.(空氣泵充氣)
+  // 2. (Air pump inflation)
   if (airpumpPhase == 1){
-    airpumpStart();  //打氣馬達充氣
-    delay(1500);     //打氣馬達充氣1.5秒
-    airpumpStop();   //打氣馬達停止 
-    delay(1000);     //打氣馬達停止1.0秒
+    airpumpStart();  // Start air pump
+    delay(1500);     // Inflate for 1.5 seconds
+    airpumpStop();   // Stop air pump
+    delay(1000);     // Wait for 1.0 second
     airpumpStart();
     delay(3000);
     airpumpStop();

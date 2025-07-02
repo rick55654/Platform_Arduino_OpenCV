@@ -12,16 +12,16 @@ class StateManager:
 
     def update(self, new_label):
         """
-        每次更新偵測結果（label 為 None 表示物體離開畫面）
-        cooldown_frames，避免因畫面閃爍誤判離開
+        Update detection result each time (label is None means object left the frame).
+        cooldown_frames prevents misjudgment of leaving due to flickering.
         """
         if new_label is not None:
             self.buffer.append(new_label)
-            self.sent = False  # 若有新目標，重置 sent 狀態
-            self.no_label_count = 0  # 偵測到物體，重置計數
+            self.sent = False  # Reset sent state if a new target is detected
+            self.no_label_count = 0  # Reset counter when object is detected
         else:
             self.no_label_count += 1
-            # 只有當 buffer 滿且 cooldown 達標才判定離開
+            # Only when buffer is full and cooldown is reached, consider as left
             if (
                 len(self.buffer) == self.buffer.maxlen
                 and not self.sent
@@ -32,6 +32,6 @@ class StateManager:
                 self.last_sent_label = most_common
                 self.sent = True
                 self.buffer.clear()
-                self.no_label_count = 0  # 重置
+                self.no_label_count = 0  # Reset
                 return most_common
         return None
