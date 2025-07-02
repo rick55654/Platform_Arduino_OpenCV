@@ -154,7 +154,7 @@ void loop() {
   if (airpumpPhase == 1 && totalSteps > 0 && totalSteps < MAX_STEPS && AIRPUMP_PWM < 140) {
     delay(5000);
     airpumpStart();
-    delay(1500);
+    delay(1500); //充氣1.5秒
     airpumpStop();
     delay(500);
     airpumpPhase = 2;
