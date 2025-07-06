@@ -21,16 +21,13 @@ action_map = {
 
 # 在這裡設定 HSV 範圍與最小面積
 color_ranges = {
-    "Red": {
-        "low": [25, 29, 233],
-        "high": [35, 123, 255],
-        "min_area": 1500
-    },
-    "Blue": {
-        "low": [54, 84, 129],
-        "high": [84, 255, 201],
-        "min_area": 1500
-    }
+    "Red": [
+        {"low": [0, 100, 100], "high": [10, 255, 255], "min_area": 1500},    # 紅色低H區段
+        {"low": [160, 100, 100], "high": [179, 255, 255], "min_area": 1500}  # 紅色高H區段
+    ],
+    "Blue": [
+        {"low": [100, 60, 60], "high": [130, 255, 255], "min_area": 1500}  # 藍色HSV範圍
+    ]
 }
 
 # ====== 目標偵測主函式 ======
@@ -40,15 +37,26 @@ def detect_target(frame):
     mask_total = np.zeros(hsv.shape[:2], dtype=np.uint8)  # 全部遮罩
     detected_labels = []
 
-    for color_name, cfg in color_ranges.items():
-        low_np = np.array(cfg["low"])
-        high_np = np.array(cfg["high"])
-        min_area = cfg.get("min_area", 1000)
-        mask = cv2.inRange(hsv, low_np, high_np)  # 產生遮罩
-        mask_total = cv2.bitwise_or(mask_total, mask)
-        cv2.imshow(f"{color_name} Mask", mask)  # 顯示遮罩
+    for color_name, cfg_list in color_ranges.items():
+        # 合併同色多區段遮罩
+        color_mask = np.zeros(hsv.shape[:2], dtype=np.uint8)
+        min_area = None
+        for cfg in cfg_list:
+            low_np = np.array(cfg["low"])
+            high_np = np.array(cfg["high"])
+            min_area = cfg.get("min_area", 1000)
+            mask = cv2.inRange(hsv, low_np, high_np)
+            color_mask = cv2.bitwise_or(color_mask, mask)
 
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # ===== 前處理：形態學操作與模糊，讓輪廓更穩定 =====
+        kernel = np.ones((5, 5), np.uint8)
+        color_mask = cv2.morphologyEx(color_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+        color_mask = cv2.GaussianBlur(color_mask, (5, 5), 0)
+
+        mask_total = cv2.bitwise_or(mask_total, color_mask)
+        cv2.imshow(f"{color_name} Mask", color_mask)  # 顯示遮罩
+
+        contours, _ = cv2.findContours(color_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for cnt in contours:
             approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)  # 多邊形近似
             x, y, w, h = cv2.boundingRect(approx)
